@@ -1,28 +1,24 @@
-package com.lyj.bi.model.entity;
+package com.lyj.bi.model.dto.chart;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 图表信息表
- * @TableName chart
+ * 更新请求
  */
-@TableName(value ="chart")
 @Data
-public class Chart {
+public class ChartUpdateRequest implements Serializable {
+
     /**
      * id
      */
-    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
-     * 图表名称
+     * 名称
      */
     private String name;
 
@@ -45,25 +41,11 @@ public class Chart {
      * 生成的图表数据
      */
     private String genChart;
-    /**
-     * 图表状态
-     */
-    private String status;
-
-    /**
-     * 执行信息
-     */
-    private String execMessage;
 
     /**
      * 生成的分析结论
      */
     private String genResult;
-
-    /**
-     * 创建用户 id
-     */
-    private Long userId;
 
     /**
      * 创建时间
@@ -80,4 +62,5 @@ public class Chart {
      */
     @TableLogic
     private Integer isDelete;
+    private static final long serialVersionUID = 1L;
 }
