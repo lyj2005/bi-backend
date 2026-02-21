@@ -5,6 +5,10 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.concurrent.*;
 
+/**
+ * @Description: 线程池配置
+ * @Author: lyj
+ */
 @Configuration
 public class ThreadPoolExecutorConfig {
 
@@ -12,13 +16,14 @@ public class ThreadPoolExecutorConfig {
     @Bean
     public ThreadPoolExecutor threadPoolExecutor() {
 
-        //1. 线程工厂
+        //1. 创建线程工厂  ---  因为后面参数中需要用到threadFactory
         ThreadFactory threadFactory = new ThreadFactory() {
 
             //线程编号
             private int count = 1;
 
             //创建新线程
+            @Override
             public Thread newThread(Runnable r) {
                 Thread thread = new Thread(r);
                 thread.setName("线程："+count);

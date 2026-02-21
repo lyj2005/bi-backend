@@ -24,4 +24,7 @@
     <select id="queryChartData" parameterType="string" resultType="hashmap">
         ${querySql}
     </select>
+
+
+
 </mapper>

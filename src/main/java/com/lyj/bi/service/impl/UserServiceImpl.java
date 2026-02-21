@@ -63,24 +63,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
+        //2. 加锁，防止重复注册
         synchronized (userAccount.intern()) {
-            // 账户不能重复
+            // 3. 账户不能重复
             QueryWrapper<User> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("userAccount", userAccount);
             long count = this.baseMapper.selectCount(queryWrapper);
             if (count > 0) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
             }
-            // 2. 加密
+            // 4. 加密
             String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
-            // 3. 插入数据
+            //5. 创建用户对象
             User user = new User();
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
+            // 6. 写入数据库
             boolean saveResult = this.save(user);
             if (!saveResult) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
             }
+            //7. 返回ID
             return user.getId();
         }
     }
@@ -106,18 +109,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 2. 加密
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
-        // 查询用户是否存在
+        // 3. 查询用户是否存在
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount", userAccount);
         queryWrapper.eq("userPassword", encryptPassword);
         User user = this.baseMapper.selectOne(queryWrapper);
-        // 用户不存在
+        // 4. 登录失败处理，用户不存在
         if (user == null) {
             log.info("user login failed, userAccount cannot match userPassword");
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
         }
-        // 3. 记录用户的登录态
+        // 5. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
+        //6. 返回脱敏对象
         return this.getLoginUserVO(user);
     }
 
@@ -130,20 +134,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public User getLoginUser(HttpServletRequest request) {
-        // 先判断是否已登录
+        //1. 获取Session中的用户
+        //2. 类型转换
+        //3. 判断是否已登录
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User currentUser = (User) userObj;
         if (currentUser == null || currentUser.getId() == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
-        // 从数据库查询（追求性能的话可以注释，直接走缓存）
+
+        //4. 获取用户ID
+        //5.  从数据库查询（追求性能的话可以注释，直接走缓存）
+        //6. 再次判断用户是否存在
         long userId = currentUser.getId();
         currentUser = this.getById(userId);
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
+        //7. 返回当前对象
         return currentUser;
     }
+
+
 
     /**
      * 获取当前登录用户（允许未登录）
@@ -153,14 +165,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public User getLoginUserPermitNull(HttpServletRequest request) {
-        // 先判断是否已登录
+        //1、 获取用户
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User currentUser = (User) userObj;
+        //2. 判断是否登录
         if (currentUser == null || currentUser.getId() == null) {
             return null;
         }
-        // 从数据库查询（追求性能的话可以注释，直接走缓存）
+        //3.  从数据库查询（追求性能的话可以注释，直接走缓存）
         long userId = currentUser.getId();
+        //4. 返回结果
         return this.getById(userId);
     }
 
@@ -172,12 +186,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public boolean isAdmin(HttpServletRequest request) {
-        // 仅管理员可查询
+        //1. 获取用户
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User user = (User) userObj;
+        //2. 返回结果
         return isAdmin(user);
     }
-
     @Override
     public boolean isAdmin(User user) {
         return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
@@ -190,47 +204,60 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public boolean userLogout(HttpServletRequest request) {
+        // 1. 判断是否已登录
+        //2. 未登录不许注销
         if (request.getSession().getAttribute(USER_LOGIN_STATE) == null) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
         }
-        // 移除登录态
+        // 3. 移除登录态
         request.getSession().removeAttribute(USER_LOGIN_STATE);
+        // 4. 返回结果
         return true;
     }
 
+
     @Override
     public LoginUserVO getLoginUserVO(User user) {
+        //1. 校验
         if (user == null) {
             return null;
         }
+        //2. 转VO
         LoginUserVO loginUserVO = new LoginUserVO();
         BeanUtils.copyProperties(user, loginUserVO);
+        //3. 返回结果
         return loginUserVO;
     }
-
     @Override
     public UserVO getUserVO(User user) {
+        //1. 校验
         if (user == null) {
             return null;
         }
+        //2. 转VO
         UserVO userVO = new UserVO();
         BeanUtils.copyProperties(user, userVO);
+        //3. 返回结果
         return userVO;
     }
-
     @Override
     public List<UserVO> getUserVO(List<User> userList) {
+        //1. 校验
         if (CollUtil.isEmpty(userList)) {
             return new ArrayList<>();
         }
+        //2. 转换
         return userList.stream().map(this::getUserVO).collect(Collectors.toList());
     }
 
+
     @Override
     public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+        //1. 校验
         if (userQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
         }
+        //2. 构造查询条件
         Long id = userQueryRequest.getId();
         String unionId = userQueryRequest.getUnionId();
         String mpOpenId = userQueryRequest.getMpOpenId();
@@ -248,17 +275,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.like(StringUtils.isNotBlank(userName), "userName", userName);
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
+        //3. 返回结果
         return queryWrapper;
     }
 
-    /**
-     * AI接口调用次数回补
-     *
-     * @param userId
-     */
-    @Override
-    public void refundAICount(Long userId) {
-
-    }
 
 }

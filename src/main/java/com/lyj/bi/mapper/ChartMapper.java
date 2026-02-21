@@ -12,6 +12,7 @@ import com.lyj.bi.model.entity.Chart;
 */
 public interface ChartMapper extends BaseMapper<Chart> {
 
+
 }
 
 

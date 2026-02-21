@@ -28,13 +28,7 @@ public class ExcelUtils {
      * @return
      */
     public static String excelToCsv(MultipartFile multipartFile) {
-//        File file = null;
-//        try {
-//            file = ResourceUtils.getFile("classpath:网站数据.xlsx");
-//        } catch (FileNotFoundException e) {
-//            throw new RuntimeException(e);
-//        }
-        //1.读取
+        //1.读取数据
         List<Map<Integer, String>> list = null;
         try {
             list = EasyExcel.read(multipartFile.getInputStream())
@@ -46,17 +40,21 @@ public class ExcelUtils {
             log.error("表格处理错误",e);
             throw new RuntimeException(e);
         }
-        //校验
+
+        //2. 校验
         if(CollUtil.isEmpty(list)) {
             return "";
         }
-        //2. 转换为csv
+
+        //3. 转换为csv
         StringBuilder stringBuilder = new StringBuilder();
-        //3. 读取表头
+
+        //4. 读取表头
         LinkedHashMap<Integer, String> headerMap =(LinkedHashMap) list.get(0);//使用LinkedHashMap为了保证有序
         List<String> headerList = headerMap.values().stream().filter(ObjectUtils::isNotEmpty).collect(Collectors.toList());//过滤数据
         stringBuilder.append(StringUtils.join(headerList,",")).append("\n");//存入stringBuilder中
-        //4. 读取信息
+
+        //5. 读取信息
         for (int i = 1; i <list.size() ; i++) {
             LinkedHashMap<Integer, String> dataMap = (LinkedHashMap) list.get(i);
             List<String> dataList = dataMap.values().stream().filter(ObjectUtils::isNotEmpty).collect(Collectors.toList()); //过滤数据
@@ -64,4 +62,5 @@ public class ExcelUtils {
         }
         return stringBuilder.toString();
     }
+
 }

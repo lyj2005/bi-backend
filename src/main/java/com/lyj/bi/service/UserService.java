@@ -109,10 +109,5 @@ public interface UserService extends IService<User> {
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
 
-    /**
-     * AI接口调用次数回补
-     * @param userId
-     */
-    void refundAICount(Long userId);
 
 }

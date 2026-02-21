@@ -60,7 +60,8 @@ public class AiManager {
      * @return
      */
     public String doChat(long modelId, String message) {
-        // 写系统预设
+
+        //1.  写系统预设
         final String SYSTEM_PROMPT = "你是一个数据分析师和前端开发专家，接下来我会按照以下固定格式给你提供内容：\n" +
                 "分析需求：\n" +
                 "{数据分析的需求或者目标}\n" +

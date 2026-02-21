@@ -41,7 +41,7 @@ public class UserController {
 
 
 
-    // region 登录相关
+    // region 登录相关代码
 
     /**
      * 用户注册
@@ -51,7 +51,7 @@ public class UserController {
      */
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
-        //校验输入
+        //1. 校验输入
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -61,7 +61,7 @@ public class UserController {
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
             return null;
         }
-        //注册用户
+        //2. 注册用户
         long result = userService.userRegister(userAccount, userPassword, checkPassword);
         return ResultUtils.success(result);
     }
@@ -75,7 +75,7 @@ public class UserController {
      */
     @PostMapping("/login")
     public BaseResponse<LoginUserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
-        //校验输入
+        //1. 校验输入
         if (userLoginRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -84,7 +84,7 @@ public class UserController {
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        //登录用户
+        //2. 登录用户
         LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword, request);
         return ResultUtils.success(loginUserVO);
     }
@@ -99,11 +99,11 @@ public class UserController {
      */
     @PostMapping("/logout")
     public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
-        //校验输入
+        //1. 校验输入
         if (request == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        //注销用户
+        //2. 注销用户
         boolean result = userService.userLogout(request);
         return ResultUtils.success(result);
     }
@@ -116,6 +116,7 @@ public class UserController {
      */
     @GetMapping("/get/login")
     public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
+        //1. 获取当前登录用户
         User user = userService.getLoginUser(request);
         return ResultUtils.success(userService.getLoginUserVO(user));
     }
@@ -125,7 +126,7 @@ public class UserController {
 
 
 
-    // region 增删改查
+    // region 增删改查代码
 
     /**
      * 创建用户
@@ -137,17 +138,24 @@ public class UserController {
     @PostMapping("/add")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addUser(@RequestBody UserAddRequest userAddRequest, HttpServletRequest request) {
+        //1. 校验输入
         if (userAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        //2. 创建用户
         User user = new User();
+        //3. 复制属性
         BeanUtils.copyProperties(userAddRequest, user);
-        // 默认密码 12345678
+        //4. 设置默认密码 12345678
         String defaultPassword = "12345678";
+        //5. 密码加密
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + defaultPassword).getBytes());
+        //6. 设置用户密码
         user.setUserPassword(encryptPassword);
+        //7. 保存用户到数据库
         boolean result = userService.save(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        //返回结果
         return ResultUtils.success(user.getId());
     }
 
@@ -161,10 +169,13 @@ public class UserController {
     @PostMapping("/delete")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> deleteUser(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
+        //1. 参数校验
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        //2. 删除
         boolean b = userService.removeById(deleteRequest.getId());
+        //3. 返回结果
         return ResultUtils.success(b);
     }
 
@@ -179,13 +190,18 @@ public class UserController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
                                             HttpServletRequest request) {
+        //1. 参数校验
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        //2. 创建新用户
         User user = new User();
+        //3. 更新
         BeanUtils.copyProperties(userUpdateRequest, user);
+        //4. 写入数据库
         boolean result = userService.updateById(user);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);//失败返回信息
+        //5. 返回结果
         return ResultUtils.success(true);
     }
 
@@ -199,11 +215,14 @@ public class UserController {
     @GetMapping("/get")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<User> getUserById(long id, HttpServletRequest request) {
+        //1. 校验参数
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        //2. 获取用户
         User user = userService.getById(id);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+        //3. 返回结果
         return ResultUtils.success(user);
     }
 
@@ -216,8 +235,11 @@ public class UserController {
      */
     @GetMapping("/get/vo")
     public BaseResponse<UserVO> getUserVOById(long id, HttpServletRequest request) {
+        //1. 获取用户
         BaseResponse<User> response = getUserById(id, request);
+        //2. 获取用户数据
         User user = response.getData();
+        //3. 转换得到结果
         return ResultUtils.success(userService.getUserVO(user));
     }
 
@@ -232,10 +254,13 @@ public class UserController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<User>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest,
                                                    HttpServletRequest request) {
+        //1. 获取当前页和大小
         long current = userQueryRequest.getCurrent();
         long size = userQueryRequest.getPageSize();
+        //2. 获取分页数据
         Page<User> userPage = userService.page(new Page<>(current, size),
                 userService.getQueryWrapper(userQueryRequest));
+        //3. 返回
         return ResultUtils.success(userPage);
     }
 
@@ -249,22 +274,29 @@ public class UserController {
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody UserQueryRequest userQueryRequest,
                                                        HttpServletRequest request) {
+        //1. 参数校验
         if (userQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        //2. 获取当前页和大小
         long current = userQueryRequest.getCurrent();
         long size = userQueryRequest.getPageSize();
-        // 限制爬虫
+        //3. 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        //4. 获取分页数据
         Page<User> userPage = userService.page(new Page<>(current, size),
                 userService.getQueryWrapper(userQueryRequest));
+        //5. 封装数据
         Page<UserVO> userVOPage = new Page<>(current, size, userPage.getTotal());
         List<UserVO> userVO = userService.getUserVO(userPage.getRecords());
         userVOPage.setRecords(userVO);
+        //6. 返回结果
         return ResultUtils.success(userVOPage);
     }
 
     // endregion
+
+
 
     /**
      * 更新个人信息
@@ -276,15 +308,20 @@ public class UserController {
     @PostMapping("/update/my")
     public BaseResponse<Boolean> updateMyUser(@RequestBody UserUpdateMyRequest userUpdateMyRequest,
                                               HttpServletRequest request) {
+        //1. 校验
         if (userUpdateMyRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        //2. 获取当前用户
         User loginUser = userService.getLoginUser(request);
+        //3. 更新
         User user = new User();
         BeanUtils.copyProperties(userUpdateMyRequest, user);
         user.setId(loginUser.getId());
+        //4. 写入到数据库中
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        //5. 返回结果
         return ResultUtils.success(true);
     }
 }

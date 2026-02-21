@@ -29,6 +29,16 @@ spring:
       port: 6379
       timeout: 5000
 
+rabbitmq:
+  host: localhost
+  port: 5672
+  username: guest
+  password: guest
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false  # 关键配置，不自动启动监听器
+
 
 server:
   address: 0.0.0.0
@@ -39,6 +49,7 @@ server:
     session:
       cookie:
         max-age: 2592000
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
@@ -48,6 +59,7 @@ mybatis-plus:
       logic-delete-field: isDelete # 全局逻辑删除的实体字段名
       logic-delete-value: 1 # 逻辑已删除值（默认为 1）
       logic-not-delete-value: 0 # 逻辑未删除值（默认为 0）
+
 # 接口文档配置
 knife4j:
   enable: true
@@ -60,4 +72,12 @@ knife4j:
         api-rule-resources:
           - com.lyj.bi.controller
 
+# DeepSeek AI配置
+deepseek:
+  api:
+    key: sk-7e70e41ac25b4cfca80b5571bda8c89b  # 替换为你的真实API Key
+    base-url: https://api.deepseek.com
+    model: deepseek-chat  # 使用的模型名称
+    max-tokens: 2000      # 最大token数
+    temperature: 0.7      # 温度参数
 
