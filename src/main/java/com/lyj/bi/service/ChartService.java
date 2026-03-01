@@ -16,11 +16,4 @@ public interface ChartService extends IService<Chart> {
 
 
 
-    /**
-     * ai调用次数统计
-     * @param chartId
-     * @return
-     */
-    Integer genChartByAICount(Long chartId);
-
 }

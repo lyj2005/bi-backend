@@ -9,11 +9,7 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
-  # session 配置
-  session:
-    # store-type: redis
-    # 30 天过期
-    timeout: 2592000
+
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -29,26 +25,23 @@ spring:
       port: 6379
       timeout: 5000
 
-rabbitmq:
-  host: localhost
-  port: 5672
-  username: guest
-  password: guest
   rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    # 不使用mq时
     listener:
       simple:
-        auto-startup: false  # 关键配置，不自动启动监听器
+        auto-startup: false
+      direct:
+        auto-startup: false
 
 
 server:
-  address: 0.0.0.0
   port: 8080
   servlet:
-    context-path: /api
-    # cookie 30 天过期
-    session:
-      cookie:
-        max-age: 2592000
+    context-path: /api # 请求路径前缀
 
 mybatis-plus:
   configuration:

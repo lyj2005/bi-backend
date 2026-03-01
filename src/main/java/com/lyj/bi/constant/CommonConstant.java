@@ -15,13 +15,5 @@ public interface CommonConstant {
      */
     String SORT_ORDER_DESC = "descend";
 
-    /**
-     * BI模型ID
-     */
-    long BI_MODEL_ID = 1659171950288818178L;
 
-    /**
-     * AI接口调用总次数（剩余次数）
-     */
-    Integer INITIALIZE_USER_NUMBER = 20;
 }

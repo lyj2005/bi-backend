@@ -40,6 +40,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     public static final String SALT = "lyj";
 
+    //region 登录注册相关代码
     /**
      * 注册
      * @param userAccount   用户账户
@@ -215,7 +216,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return true;
     }
 
+    //endregion
 
+
+    //region 返回脱敏封装代码
     @Override
     public LoginUserVO getLoginUserVO(User user) {
         //1. 校验
@@ -250,7 +254,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userList.stream().map(this::getUserVO).collect(Collectors.toList());
     }
 
+    //endregion
 
+
+
+    /**
+     * 查询封装代码
+     * @param userQueryRequest
+     * @return
+     */
     @Override
     public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
         //1. 校验
