@@ -7,10 +7,7 @@
 - Spring Boot
 - Spring MVC
 - MyBatis + MyBatis Plus 数据访问（开启分页）
-- Spring Boot 调试工具和项目处理器
 - Spring AOP 切面编程
-- Spring Scheduler 定时任务
-- Spring 事务注解
 
 ### 数据存储
 
@@ -21,14 +18,12 @@
 
 - Easy Excel 表格处理
 - Hutool 工具库
-- Gson 解析库
 - Apache Commons Lang3 工具类
 - Lombok 注解
 
 ### 业务特性
 
 - Spring Session Redis 分布式登录
-- 全局请求响应拦截器（记录日志）
 - 全局异常处理器
 - 自定义错误码
 - 封装通用响应类
@@ -42,6 +37,7 @@
 ## 业务功能
 
 - 用户登录、注册、注销、更新、检索、权限管理
+- 图表AI分析、可视化展示
 
 ### 单元测试
 
