@@ -71,7 +71,7 @@ knife4j:
 # DeepSeek AI配置
 deepseek:
   api:
-    key: sk-7e70e41ac25b4cfca80b5571bda8c89b  # 替换为你的真实API Key
+    key: sk-7e70e41ac25b4cfca80b5571ba8c89b  # 替换为你的真实API Key
     base-url: https://api.deepseek.com
     model: deepseek-chat  # 使用的模型名称
     max-tokens: 2000      # 最大token数
