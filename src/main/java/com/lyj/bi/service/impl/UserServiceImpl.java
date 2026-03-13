@@ -79,6 +79,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             User user = new User();
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
+            user.setUserName(userAccount);
             // 6. 写入数据库
             boolean saveResult = this.save(user);
             if (!saveResult) {

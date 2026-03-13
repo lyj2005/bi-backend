@@ -1,13 +1,13 @@
-package com.lyj.bi.bizmq;
+package com.lyj.bi.bizmq.bi;
 
 import com.lyj.bi.common.ErrorCode;
-import com.lyj.bi.componet.WebSocketServer;
 import com.lyj.bi.exception.BusinessException;
 import com.lyj.bi.manager.AiManager;
 import com.lyj.bi.model.entity.Chart;
 import com.lyj.bi.model.enums.ChartStatusEnum;
 import com.lyj.bi.service.ChartService;
 import com.lyj.bi.service.UserService;
+import com.lyj.bi.utils.ExcelUtils;
 import com.rabbitmq.client.Channel;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
@@ -32,8 +32,6 @@ public class BIMessageConsumer {
     @Resource
     private UserService userService;
 
-    @Resource
-    private WebSocketServer webSocketService;
 
     /**
      * 接收消息的方法
@@ -45,53 +43,66 @@ public class BIMessageConsumer {
     @SneakyThrows
     @RabbitListener(queues = {BiMqConstant.BI_QUEUE_NAME}, ackMode = "MANUAL")
     public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
-        log.info("receiveMessage message = {}", message);
-        if (StringUtils.isBlank(message)) {
-            // 如果更新失败，拒绝当前消息，让消息重新进入队列
-            channel.basicNack(deliveryTag, false, false);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "消息为空");
-        }
-        long chartId = Long.parseLong(message);
-        Chart chart = chartService.getById(chartId);
-        if (chart == null) {
-            // 如果图表为空，拒绝消息并抛出业务异常
-            channel.basicNack(deliveryTag, false, false);
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "图表为空");
-        }
 
+        log.info("receiveMessage message = {}", message);
+
+        //1. 处理生产者发来的消息  ---  就是多了这一步和每次失败都要拒绝消息，其他逻辑一样的
+        //①如果消息为空。即更新失败了，拒绝消息，重新放到消息队列中
+        if (StringUtils.isBlank(message)) {
+            channel.basicNack(deliveryTag, false, false);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"消息为空");
+        }
+        //②如果图表为空。拒绝消息并抛出异常
+        Chart chart = chartService.getById(Long.parseLong(message));
+        if (chart == null) {
+            channel.basicNack(deliveryTag, false, false);
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "图表不存在");
+        }
+        //②如果图表为空。拒绝消息并抛出异常
+
+        //先修改图表任务状态为“执行中”。等执行成功后，修改为“已完成”、保存执行结果；执行失败后，状态修
+        //改为“失败”，记录任务失败信息。（为了防止同一个任务被多次执行）
+        //2. 修改图表任务状态为“执行中”，提交到数据库
         Chart updateChart = new Chart();
         updateChart.setId(chart.getId());
         updateChart.setStatus("running");
-        boolean b = chartService.updateById(updateChart);
-        if (!b) {
-            // 如果更新图表执行中状态失败，拒绝消息并处理图表更新错误
+        boolean updateResult = chartService.updateById(updateChart);
+        //如果提交失败，数据库出问题了
+        if (!updateResult) {
             channel.basicNack(deliveryTag, false, false);
-            handleChartUpdateError(chart.getId(), "更新图表执行中状态失败");
-            return;
+            handleChartUpdateException(chart.getId(), "修改图表任务状态为“执行中”失败");
+            return;//终止当前任务，注意不是员工  --  线程
         }
 
+//3. 调用AI,得到结果（genChart,genResult）
         String result = aiManager.doChat(buildUserInput(chart));
+
+        //4. 处理结果
+        //①依照【【【【【拆分结果，得到字符数组splits
         String[] splits = result.split("【【【【【");
+        //②校验
         if (splits.length < 3) {
             channel.basicNack(deliveryTag, false, false);
-            handleChartUpdateError(chart.getId(), "AI 生成错误");
-            return;
+            handleChartUpdateException(chart.getId(), "AI生成错误");
         }
+        //③得到（genChart,genResult）,需要去掉多余空格，使用trim方法
         String genChart = splits[1].trim();
         String genResult = splits[2].trim();
+
+        //5. 再次更新数据库
         Chart updateChartResult = new Chart();
         updateChartResult.setId(chart.getId());
         updateChartResult.setGenChart(genChart);
         updateChartResult.setGenResult(genResult);
-        // todo 建议定义状态为枚举值
         updateChartResult.setStatus("succeed");
-        boolean updateResult = chartService.updateById(updateChartResult);
-        if (!updateResult) {
-            // 如果更新图表成功状态失败，拒绝消息并处理图表更新错误
+        boolean b = chartService.updateById(updateChartResult);
+        if (!b) {
             channel.basicNack(deliveryTag, false, false);
-            handleChartUpdateError(chart.getId(), "更新图表成功状态失败");
+            handleChartUpdateException(chart.getId(), "更新数据库失败");
         }
-        // 消息确认
+
+
+        //6.  消息确认
         channel.basicAck(deliveryTag, false);
     }
 
@@ -100,43 +111,56 @@ public class BIMessageConsumer {
      * 上面接口很多用到异常
      * 创建一个回调函数，对图表状态失败这一情况进行集中异常处理
      */
-    private void handleChartUpdateError(long chartId, String execMessage) {
+    private void handleChartUpdateException(long chartId, String execMessage) {
+        //1. 保存到数据库
         Chart updateChartResult = new Chart();
         updateChartResult.setId(chartId);
         updateChartResult.setExecMessage(execMessage);
         updateChartResult.setStatus(ChartStatusEnum.FAILED.getValue());
         boolean updateResult = chartService.updateById(updateChartResult);
+        //2. 如果更新失败，打日志
         if (!updateResult) {
-            webSocketService.sendAllMessage("图表生成失败！");
             log.error("更新图表失败状态失败" + chartId + "," + execMessage);
         }
     }
 
+
     /**
-     * 构建用户输入
-     * @param chart 图表对象
-     * @return 用户输入字符串
+     * 构建用户输入方法  --  基于原来的方法改造
+     * @param chart
+     * @return
      */
     private String buildUserInput(Chart chart) {
-        // 获取图表的目标、类型和数据
+            /**（参考）
+             分析需求：
+             (分析网站用户的增长情况)[，请使用雷达图]
+             原始数据：
+             (日期，用户数
+             1号，10
+             2号，20
+             3号，30)
+             */
+            //1. 获取图表信息
         String goal = chart.getGoal();
         String chartType = chart.getChartType();
         String csvData = chart.getChartData();
 
-        // 构造用户输入
+        //2. 构造用户输入
         StringBuilder userInput = new StringBuilder();
-        userInput.append("分析需求：").append("\n");
-
-        // 拼接分析目标
-        String userGoal = goal;
-        if (StringUtils.isNotBlank(chartType)) {
-            userGoal += "，请使用" + chartType;
+            userInput.append("分析需求:").append("/n");
+            //①拼接分析目标
+            String userGoal = goal;
+            //②拼接图表类型,如果为非空，才拼接在最后
+            if (!StringUtils.isEmpty(chartType)) {
+                userGoal = userGoal + "，请使用" + chartType;
+            }
+            userInput.append(userGoal).append("/n");
+            //③拼接转换后的图表
+            userInput.append("原始数据:").append("/n");
+            userInput.append(csvData).append("/n");
+            //3. 将stringbuilder转换为string,返回结果
+            return userInput.toString();
         }
-        userInput.append(userGoal).append("\n");
-        userInput.append("原始数据：").append("\n");
-        userInput.append(csvData).append("\n");
-        // 将StringBuilder转换为String并返回
-        return userInput.toString();
-    }
+
 
 }

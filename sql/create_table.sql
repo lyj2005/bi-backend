@@ -24,7 +24,7 @@ create table if not exists user
 create table if not exists chart
 (
     id          bigint auto_increment comment 'id' primary key,
-    goal        text                               null comment '账号',
+    goal        text                               null comment '分析目标',
     name        varchar(128)                       null comment '图表名称',
     chartData   text                               null comment '图表数据',
     chartType   varchar(128)                       null comment '图表类型',
@@ -32,6 +32,7 @@ create table if not exists chart
     genResult   text                               null comment '生成的分析结论',
     status      varchar(128)                       not null default 'wait' comment 'wait,succeed,failed,running',
     execMessage text                               null comment '执行信息',
+    userId          bigint                             not null comment '创建用户 id',
     createTime  datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     isDelete    tinyint  default 0                 not null comment '是否删除'

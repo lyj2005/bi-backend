@@ -15,27 +15,25 @@ import org.springframework.stereotype.Service;
 @Service
 public class RedisLimiterManager {
 
-    //1. 创建一个实例
+    //1. 拿到redissonClient客户端
     @Resource
-    private RedissonClient redisson;
+    private RedissonClient redissonClient;
 
-    /**
-     * 2. 限流
-     * @param key
-     */
-    public void doRateLimiter(String key) {
-        // 1. 获取 RateLimiter限流器
-        RRateLimiter rateLimiter = redisson.getRateLimiter(key);
 
-        // 2. 初始化限流规则（每秒 5 个请求）
-        rateLimiter.trySetRate(RateType.OVERALL, 5, 1, RateIntervalUnit.SECONDS);
-
-        //3. 当操作来了，取令牌
+    public void doRateLimit(String key) {
+        //1. 创建名为key的限流器
+        RRateLimiter rateLimiter = redissonClient.getRateLimiter(key);
+        //2. 设置限流器,设置每秒最多访问2次
+        //参数解释：
+        // 限流器的统计规则(每秒2个请求;连续的请求,最多只能有1个请求被允许通过)
+        // RateType.OVERALL表示速率限制作用于整个令牌桶,即限制所有请求的速率
+        rateLimiter.trySetRate(RateType.OVERALL, 2, 1, RateIntervalUnit.SECONDS);
+        //3. 从限流器1次取1个令牌
         boolean canOp = rateLimiter.tryAcquire(1);
+        //4. 没有令牌，抛出异常
         if (!canOp) {
             throw new BusinessException(ErrorCode.TOO_MANY_REQUEST);
         }
-
     }
 
 }

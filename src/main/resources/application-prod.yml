@@ -1,0 +1,66 @@
+spring:
+  application:
+    name:bi-backend
+
+  # 支持 swagger3
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  session:
+    store-type: redis
+    timeout: 1800s
+
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://43.138.168.102:3306/bi
+    username: bi
+    password: JAbZ3x8j2j2WLTsi
+
+  # Redis 配置
+  data:
+    redis:
+      host: 43.138.168.102
+      database: 1
+      port: 6379
+      password: 2023
+      timeout: 5000
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    # 不使用mq时
+#    listener:
+#      simple:
+#        auto-startup: false
+#      direct:
+#        auto-startup: false
+
+
+server:
+  port: 8123
+  servlet:
+    context-path: /api # 请求路径前缀
+
+mybatis-plus:
+  configuration:
+    # 生产环境关闭日志
+    log-impl: ''
+# 接口文档配置
+knife4j:
+  basic:
+    enable: true
+    username: root
+    password: 123456
+
+# DeepSeek AI配置
+deepseek:
+  api:
+    key: sk-0fead29edbf5482ba5e213f48d98000b  # 替换为你的真实API Key
+    base-url: https://api.deepseek.com
+    model: deepseek-chat  # 使用的模型名称
+    max-tokens: 2000      # 最大token数
+    temperature: 0.7      # 温度参数
+

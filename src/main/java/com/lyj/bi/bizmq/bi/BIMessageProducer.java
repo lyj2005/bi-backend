@@ -1,4 +1,4 @@
-package com.lyj.bi.bizmq;
+package com.lyj.bi.bizmq.bi;
 
 import jakarta.annotation.Resource;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

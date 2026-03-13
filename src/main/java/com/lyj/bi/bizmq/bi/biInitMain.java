@@ -1,4 +1,4 @@
-package com.lyj.bi.bizmq;
+package com.lyj.bi.bizmq.bi;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;

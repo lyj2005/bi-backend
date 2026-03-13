@@ -29,7 +29,7 @@ public class ExcelUtils {
      * @return
      */
     public static String excelToCsv(MultipartFile multipartFile) {
-        //1.读取数据
+        //1.读取excel
         List<Map<Integer, String>> list = null;
         try {
             list = EasyExcel.read(multipartFile.getInputStream())
@@ -49,13 +49,11 @@ public class ExcelUtils {
 
         //3. 转换为csv
         StringBuilder stringBuilder = new StringBuilder();
-
-        //4. 读取表头
+        //①读取表头
         LinkedHashMap<Integer, String> headerMap =(LinkedHashMap) list.get(0);//使用LinkedHashMap为了保证有序
         List<String> headerList = headerMap.values().stream().filter(ObjectUtils::isNotEmpty).collect(Collectors.toList());//过滤数据
         stringBuilder.append(StringUtils.join(headerList,",")).append("\n");//存入stringBuilder中
-
-        //5. 读取信息
+        //②读取信息
         for (int i = 1; i <list.size() ; i++) {
             LinkedHashMap<Integer, String> dataMap = (LinkedHashMap) list.get(i);
             List<String> dataList = dataMap.values().stream().filter(ObjectUtils::isNotEmpty).collect(Collectors.toList()); //过滤数据

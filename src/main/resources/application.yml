@@ -5,6 +5,9 @@ spring:
   # 默认 dev 环境
   profiles:
     active: dev
+  session:
+    store-type: redis  # 明确指定不使用任何 session 存储
+    timeout: 1800s  # session 超时时间
   # 支持 swagger3
   mvc:
     pathmatch:
@@ -31,11 +34,11 @@ spring:
     username: guest
     password: guest
     # 不使用mq时
-    listener:
-      simple:
-        auto-startup: false
-      direct:
-        auto-startup: false
+#    listener:
+#      simple:
+#        auto-startup: false
+#      direct:
+#        auto-startup: false
 
 
 server:
@@ -73,4 +76,5 @@ deepseek:
     model: deepseek-chat  # 使用的模型名称
     max-tokens: 2000      # 最大token数
     temperature: 0.7      # 温度参数
+
 
