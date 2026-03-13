@@ -13,9 +13,9 @@ spring:
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://43.138.168.102:3306/bi
+    url: jdbc:mysql://43.138.18.102:3306/bi
     username: bi
-    password: JAbZ3x8j2j2WLTsi
+    password: AbZx8j2j2Ts
 
   # Redis 配置
   data:
@@ -58,7 +58,7 @@ knife4j:
 # DeepSeek AI配置
 deepseek:
   api:
-    key: sk-0fead29edbf5482ba5e213f48d98000b  # 替换为你的真实API Key
+    key: sk-  # 替换为你的真实API Key
     base-url: https://api.deepseek.com
     model: deepseek-chat  # 使用的模型名称
     max-tokens: 2000      # 最大token数
