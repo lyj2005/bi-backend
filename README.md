@@ -4,6 +4,13 @@
 
 
 
+## 🌐 Translations
+
+[English](./translations/en/README.md) | [Français](./translations/fr/README.md)
+
+---
+
+
 ## 项目简介
 
 ### 项目介绍
